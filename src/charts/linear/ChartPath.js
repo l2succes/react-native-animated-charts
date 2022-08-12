@@ -683,7 +683,7 @@ function ChartPath({
 
   const animatedFillProps = useAnimatedStyle(() => {
     return {
-      d: path.value + ' L 390 216 L 0 216 Z',
+      d: path.value.length ? 0 > path.value + ' L 390 216 L 0 216 Z' : '',
     };
   });
 
