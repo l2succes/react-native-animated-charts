@@ -17,7 +17,15 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Path, Svg } from 'react-native-svg';
+import {
+  ClipPath,
+  Defs,
+  LinearGradient,
+  Path,
+  Svg,
+  Stop,
+  Rect,
+} from 'react-native-svg';
 
 import ChartContext, {
   useGenerateValues as generateValues,
@@ -188,7 +196,6 @@ export default function ChartPathProvider({
     state,
     setContextValue = () => {},
     providedData = rawData,
-    proceededData,
   } = useContext(ChartContext) || generateValues();
 
   const prevData = useSharedValue(valuesStore.current.prevData, 'prevData');
@@ -219,7 +226,6 @@ export default function ChartPathProvider({
       return;
     }
     const [parsedData] = parse(data.points, data.yRange);
-    proceededData.value = parsedData;
     const [parsedoriginalData, newExtremes] = parse(
       data.nativePoints || data.points
     );
@@ -675,6 +681,12 @@ function ChartPath({
     return props;
   }, []);
 
+  const animatedFillProps = useAnimatedStyle(() => {
+    return {
+      d: path.value + ' L 390 216 L 0 216 Z',
+    };
+  });
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: pathOpacity.value * (1 - selectedOpacity) + selectedOpacity,
@@ -685,6 +697,7 @@ function ChartPath({
     <InternalContext.Provider
       value={{
         animatedProps,
+        animatedFillProps,
         animatedStyle,
         gestureEnabled,
         height,
@@ -707,11 +720,13 @@ export function SvgComponent() {
     height,
     width,
     animatedProps,
+    animatedFillProps,
     props,
     onLongPressGestureEvent,
     gestureEnabled,
     longPressGestureHandlerProps,
   } = useContext(InternalContext);
+
   return (
     <LongPressGestureHandler
       enabled={gestureEnabled}
@@ -727,10 +742,27 @@ export function SvgComponent() {
           viewBox={`0 0 ${width} ${height}`}
           width={width}
         >
+          <Defs>
+            <LinearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0.1" stopColor={props.stroke} stopOpacity="0.15" />
+              <Stop offset="0.9" stopColor="#000000" stopOpacity="0" />
+            </LinearGradient>
+          </Defs>
+
           <AnimatedPath
+            id="a"
             animatedProps={animatedProps}
             {...props}
             style={[style, animatedStyle]}
+          />
+
+          <AnimatedPath
+            id="a2"
+            animatedProps={animatedFillProps}
+            fill={'url(#gradient)'}
+            {...props}
+            style={[style, animatedStyle]}
+            stroke="none"
           />
         </Svg>
       </Animated.View>
